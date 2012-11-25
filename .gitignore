@@ -1,0 +1,6 @@
+*.gem
+*.rbc
+.bundle
+test/tmp
+tmp
+.vagrant
