@@ -4,3 +4,6 @@
 test/tmp
 tmp
 .vagrant
+.cache
+quetzal64.box
+trash/
