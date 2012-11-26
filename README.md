@@ -4,10 +4,9 @@ This Vagrant file use a fresh install of ubuntu 12.10 64 bit server edition.
 Get started by installing Vithe dependencies and bringing up the development vm.
 
     bundle install
-    
     vagrant up 
   
-will bring up a VM, and run the setup.sh script, which will setuo wireshark and mininet on the vm.
+Will bring up a VM, and run the setup.sh script, which will install and configure mininet and some related tools on the vm.
 You can login and try a few mininet commands.
 
     vagrant ssh
