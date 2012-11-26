@@ -83,9 +83,8 @@ There are 2 default users setup with passwordless usdo and username/password of:
 
 ### Netoworking
 
-- eth0: The first interface configured in virtualbox is the default NAT interface using the intel driver.
-
-- eth1: configured to be on hostonly network vboxnet0 with ip address of 192.168.33.2 and virt-io driver. 
+  - eth0: The first interface configured in virtualbox is the default NAT interface using the intel driver.
+  - eth1: configured to be on hostonly network vboxnet0 with ip address of 192.168.33.253 and virt-io driver. 
   
   
 ###  Build the Basebox from scratch
