@@ -28,32 +28,111 @@
 
     <div class="container">
       <section id="main_content">
-        <h3>Welcome to GitHub Pages.</h3>
+        <h1>mininet dev box</h1>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p>This Vagrant file use a fresh install of ubuntu 12.10 64 bit server edition.<br>
+Get started by installing Vithe dependencies and bringing up the development vm.</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<pre><code>bundle install
+vagrant up 
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>Will bring up a VM, and run the setup.sh script, which will install and configure mininet and some related tools on the vm.
+You can login and try a few mininet commands.</p>
 
-<h3>Designer Templates</h3>
+<pre><code>vagrant ssh
+root@quetzal64:~# mn --test iperf
+*** Creating network
+*** Adding controller
+*** Adding hosts:
+h1 h2 
+*** Adding switches:
+s1 
+*** Adding links:
+(h1, s1) (h2, s1) 
+*** Configuring hosts
+h1 h2 
+*** Starting controller
+*** Starting 1 switches
+s1 
+*** Iperf: testing TCP bandwidth between h1 and h2
+*** Results: ['118 Mbits/sec', '119 Mbits/sec']
+*** Stopping 2 hosts
+h1 h2 
+*** Stopping 1 switches
+s1 ...
+*** Stopping 1 controllers
+c0 
+*** Done
+completed in 5.415 seconds
+</code></pre>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<p>Login to the interactive session to explore</p>
 
-<h3>Rather Drive Stick?</h3>
+<pre><code>root@quetzal64:~# mn
+*** Creating network
+*** Adding controller
+*** Adding hosts:
+h1 h2 
+*** Adding switches:
+s1 
+*** Adding links:
+(h1, s1) (h2, s1) 
+*** Configuring hosts
+h1 h2 
+*** Starting controller
+*** Starting 1 switches
+s1 
+*** Starting CLI:
+mininet&gt; help
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+Documented commands (type help &lt;topic&gt;):
+========================================
+EOF    exit   intfs     link   noecho    py    source
+dpctl  gterm  iperf     net    pingall   quit  time  
+dump   help   iperfudp  nodes  pingpair  sh    xterm 
 
-<h3>Authors and Contributors</h3>
+You may also send a command to a node using:
+  &lt;node&gt; command {args}
+For example:
+  mininet&gt; h1 ifconfig
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+The interpreter automatically substitutes IP addresses
+for node names when a node is the first arg, so commands
+like
+  mininet&gt; h2 ping h3
+should work.
+</code></pre>
 
-<h3>Support or Contact</h3>
+<h3>Default Users</h3>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>There are 2 default users setup with passwordless usdo and username/password of:</p>
+
+<ul>
+<li>vagrant/vagrant
+
+<ul>
+<li>The vagrant user also has a .ssh/authorized_keys file matching the commonly used vagrant insecrure_private_key.</li>
+</ul>
+</li>
+<li>openflow/openflow</li>
+</ul><h3>Netoworking</h3>
+
+<ul>
+<li>eth0: The first interface configured in virtualbox is the default NAT interface using the intel driver.</li>
+<li>eth1: configured to be on hostonly network vboxnet0 with ip address of 192.168.33.253 and virt-io driver. </li>
+</ul><h3>Build the Basebox from scratch</h3>
+
+<p>The creation of this basebox was automated with the vewee tool.  Details of the build configuration are in the definitions/ directory, and can be used
+to recreate the basebox from iso.</p>
+
+<pre><code>vagrant basebox build 'quetzal64'
+vagrant basebox validate 'quetzal64'
+vagrant basebox export 'quetzal64'
+vagrant box add quetzal64
+vagrant up
+vagrant ssh
+</code></pre>
       </section>
     </div>
 
