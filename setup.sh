@@ -2,7 +2,7 @@
 set -x 
 set -e
 
-if [[ -f /tmp/provisioning_completed ]]; then
+if [[ -f /var/log/vagrant_provisioning_completed ]]; then
   exit 0
 fi
 
@@ -56,16 +56,20 @@ function instal_python () {
 }
 
 function setup_deploy_user () {
-  echo "\n\n ---> $FUNCNAME now executing."
-  sudo useradd -c 'The user used to deploy apps' -s '/bin/bash' -d /home/${USERNAME} -m ${USERNAME}
-  sudo touch /etc/sudoers.d/91-${USERNAME}
-  sudo chmod 0440 /etc/sudoers.d/91-${USERNAME}
-  echo "echo \"${USERNAME} ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/91-${USERNAME}" | sudo bash
-  sudo mkdir -p /home/${USERNAME}/.ssh
-  echo "${AUTHORIZED_KEYS}" > /tmp/authorized_keys
-  sudo mv /tmp/authorized_keys /home/${USERNAME}/.ssh/authorized_keys
-  sudo chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh
-  # sudo -u ${USERNAME} 'ssh-keygen -b 4096 -t rsa -f /home/${USERNAME}/.ssh/id_rsa -P ""'
+  if [[ `cat /etc/passwd |grep ${USERNAME}` ]]; then
+    echo "user $USERNAME already exists."
+  else
+    echo "\n\n ---> $FUNCNAME now executing."
+    sudo useradd -c 'The user used to deploy apps' -s '/bin/bash' -d /home/${USERNAME} -m ${USERNAME}
+    sudo touch /etc/sudoers.d/91-${USERNAME}
+    sudo chmod 0440 /etc/sudoers.d/91-${USERNAME}
+    echo "echo \"${USERNAME} ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/91-${USERNAME}" | sudo bash
+    sudo mkdir -p /home/${USERNAME}/.ssh
+    echo "${AUTHORIZED_KEYS}" > /tmp/authorized_keys
+    sudo mv /tmp/authorized_keys /home/${USERNAME}/.ssh/authorized_keys
+    sudo chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh
+    # sudo -u ${USERNAME} 'ssh-keygen -b 4096 -t rsa -f /home/${USERNAME}/.ssh/id_rsa -P ""'    
+  fi
 }
 
 function setup_postgres () {
@@ -86,19 +90,7 @@ function install_ruby () {
   echo "\n\n ---> $FUNCNAME now executing."
   sudo sh -c "echo 'gem: --no-ri --no-rdoc'>>/etc/gemrc"
   sudo apt-get -y install ruby1.9.1-full libnokogiri-ruby1.9.1
-  sudo gem install bundler json foreman taps
-}
-
-function setup_www () {
-  echo "\n\n  ---> $FUNCNAME now executing."
-  sudo apt-get -y install nginx-full
-  sudo mkdir -p /var/www/apps
-  sudo chown -R ${USERNAME}:www-data /var/www
-}
-
-function setup_monitoring () {
-  sudo apt-get install -y ganglia-monitor
-  sudo apt-get install -y collectd libvirt0 collectd-dev
+  sudo gem install bundler
 }
 
 function setup_rvm () {
@@ -113,50 +105,23 @@ function setup_rvm () {
   sudo -i -u ${USERNAME} bash -c "gem install capistrano foreman pg pry awesome_print nokogiri oj multi_json faraday thin puma"
 }
 
-function setup_floodlight () {
-  install_java #if not already installed
-  sudo apt-get install build-essential default-jdk ant python-dev
-  git clone git://github.com/floodlight/floodlight.git
-  cd floodlight
-  ant
-  # java -jar floodlight.jar
-}
-
-function main () {
-  setup_apt_cache
-  
-  # dist_upgrade
-  setup_deploy_user
-  install_common_tools
-  build_tools
-  
-  # setup_postgres
-  # setup_www
-  # install_java
-  # setup_monitoring
-  # setup_rvm
-  # setup_mininet
-}
-
-
-
-
 
 
 # ======================================================================================
-# = CODE BELOW HERE IS MODIFIED VERSION OF THE install.sh SCRIPT FROM THE MININET REPO =
+#   CODE BELOW HERE IS MODIFIED VERSION OF THE install.sh SCRIPT FROM THE MININET REPO
+#   Mininet install script for Ubuntu (and Debian Lenny)
+#   Brandon Heller (brandonh@stanford.edu)
 # ======================================================================================
-
-#!/usr/bin/env bash
-
-# Mininet install script for Ubuntu (and Debian Lenny)
-# Brandon Heller (brandonh@stanford.edu)
 
 # Fail on error
 set -e
 
 # Fail on unset var usage
 set -o nounset
+
+# The working dir is where this script wil check out and build code.
+WORKING_DIR=/home/vagrant/vagrant-mininet/openflow
+mkdir -p ${WORKING_DIR}
 
 # Location of CONFIG_NET_NS-enabled kernel(s)
 KERNEL_LOC=http://www.openflow.org/downloads/mininet
@@ -166,9 +131,6 @@ KERNEL_LOC=http://www.openflow.org/downloads/mininet
 DIST=Unknown
 RELEASE=Unknown
 CODENAME=Unknown
-
-WORKING_DIR=/home/openflow
-mkdir -p ${WORKING_DIR}
 
 ARCH=`uname -m`
 if [ "$ARCH" = "x86_64" ]; then ARCH="amd64"; fi
@@ -235,7 +197,8 @@ OVS_KMODS=($OVS_BUILD/datapath/linux/{openvswitch_mod.ko,brcompat_mod.ko})
 function sync_git_repo () {
   REPO=$1
   NAME=$2
-  if [[ -d ${WORKING_DIR}/$1 ]]; then
+  echo "syncing to ${WORKING_DIR}/$2"
+  if [ -d ${WORKING_DIR}/$2 ]; then
     cd ${WORKING_DIR}/$2 && git pull
   else
     git clone $1 ${WORKING_DIR}/$2
@@ -290,7 +253,8 @@ function mn_deps {
     echo "Installing Mininet dependencies"
     $install gcc make screen psmisc xterm ssh iperf iproute \
         python-setuptools python-networkx cgroup-bin ethtool help2man \
-        pyflakes pylint pep8
+        pyflakes pylint pep8 
+    $install doxypy  #comment out or remove if you do not want to build documentation.
 
     if [ "$DIST" = "Ubuntu" ] && [ "$RELEASE" = "10.04" ]; then
         echo "Upgrading networkx to avoid deprecation warning"
@@ -308,7 +272,11 @@ function mn_deps {
     echo "Installing Mininet core"
     pushd ${WORKING_DIR}/mininet
     sudo make install
+    make  doc
     popd
+    
+    
+    
 }
 
 # The following will cause a full OF install, covering:
@@ -379,7 +347,6 @@ function wireshark {
 
 # Install Open vSwitch
 # Instructions derived from OVS INSTALL, INSTALL.OpenFlow and README files.
-
 function ovs {
     echo "Installing Open vSwitch..."
 
@@ -414,7 +381,7 @@ function ovs {
             # Otherwise, install it.
             $install openvswitch-datapath-dkms
         fi
-	if $install openvswitch-switch openvswitch-controller; then
+        if $install openvswitch-switch openvswitch-controller; then
             echo "Ignoring error installing openvswitch-controller"
         fi
         ovspresent=1
@@ -625,20 +592,18 @@ function modprobe {
 
 
 
+
 echo "Running all commands...as "
 whoami
-sudo printenv
-printenv
-setup_apt_cache
-sudo apt-get update
+# setup_apt_cache
 dist_upgrade
 setup_deploy_user
 install_common_tools
-# build_tools
+build_tools
 install_java
 
 
-# mininet setuo
+# mininet setup
 sync_git_repo git://github.com/mininet/mininet.git mininet
 cd ${WORKING_DIR}
 kernel
@@ -654,10 +619,18 @@ cbench
 other
 # test that it really works
 sudo mn --test pingall
-echo "Please reboot, then run ./mininet/util/install.sh -c to remove unneeded packages."
-echo "Enjoy Mininet!"
+echo "Mininet succesfully installed.  Enjoy Mininet!"
+echo "Now installing additional controllers."
 
-date >> /tmp/provisioning_completed
+function install_floodlight () {
+  sudo apt-get install build-essential default-jdk ant python-dev eclipse
+  sync_git_repo git://github.com/floodlight/floodlight.git floodlight
+  git checkout stable
+  ant
+}
 
-exit 0
+sudo date >> /var/log/vagrant_provisioning_completed
+
+reboot
+
 

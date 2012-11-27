@@ -7,3 +7,4 @@ tmp
 .cache
 quetzal64.box
 trash/
+/openflow/*

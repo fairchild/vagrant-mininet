@@ -13,7 +13,7 @@ Vagrant::Config.run do |config|
   # The url from where the 'config.vm.box' box will be fetched if it
   # doesn't already exist on the user's system.
   # The below is a box build using the configuration in ./definitions/quetzal64
-  config.vm.box_url = "https://dl.dropbox.com/u/65741/vagrant_boxes/quetzal64.box"
+  config.vm.box_url = "https://github.com/downloads/fairchild/vagrant-mininet/quetzal64.box"
 
   # Boot with a GUI so you can see the screen. (Default is headless)
   # config.vm.boot_mode = :gui
@@ -37,7 +37,7 @@ Vagrant::Config.run do |config|
   # an identifier, the second is the path on the guest to mount the
   # folder, and the third is the path on the host to the actual folder.
   # config.vm.share_folder "v-data", "/vagrant_data", "../data"
-  config.vm.share_folder "v-data", "/home/vagrant/code", File.expand_path("..", __FILE__)
+  config.vm.share_folder "vagrant-mininet", "/home/vagrant/vagrant-mininet", File.expand_path("..", __FILE__), :nfs=>true
   
   # provision with a shell script.
   config.vm.provision :shell, :path => "setup.sh"
